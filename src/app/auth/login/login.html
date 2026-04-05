@@ -1,0 +1,95 @@
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#6C63FF" />
+        <path d="M8 22L14 10L20 18L24 14" stroke="white" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <circle cx="24" cy="14" r="2" fill="#FFD166" />
+      </svg>
+      <span class="auth-brand__name">JobPilot</span>
+    </div>
+
+    <div class="auth-hero">
+      <h1 class="auth-hero__title">Your job hunt,<br><span>on autopilot.</span></h1>
+      <p class="auth-hero__sub">Scrape listings, get AI analysis, and auto-apply — all while you sleep.</p>
+
+      <div class="auth-features">
+        <div class="feat">
+          <span class="feat__icon">🔍</span>
+          <div>
+            <strong>Smart Scraping</strong>
+            <p>LinkedIn & Naukri — automated daily</p>
+          </div>
+        </div>
+        <div class="feat">
+          <span class="feat__icon">🤖</span>
+          <div>
+            <strong>AI Match Analysis</strong>
+            <p>Gemini scores every job against your profile</p>
+          </div>
+        </div>
+        <div class="feat">
+          <span class="feat__icon">⚡</span>
+          <div>
+            <strong>Auto Apply</strong>
+            <p>Applies to high-match jobs automatically</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2 class="auth-card__title">Welcome back</h2>
+      <p class="auth-card__sub">Sign in to your JobPilot account</p>
+
+      @if (error()) {
+      <div class="alert alert-error">
+        <span>⚠</span> {{ error() }}
+      </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-field">
+          <label for="email">Email address</label>
+          <input id="email" type="email" formControlName="email" placeholder="you@example.com"
+            [class.invalid]="email.invalid && email.touched" autocomplete="email" />
+          @if (email.invalid && email.touched) {
+          <span class="field-error">{{ email.errors?.['required'] ? 'Email is required' : 'Enter a valid email'
+            }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="password">Password</label>
+          <div class="pw-wrap">
+            <input id="password" [type]="showPw() ? 'text' : 'password'" formControlName="password"
+              placeholder="Your password" [class.invalid]="password.invalid && password.touched"
+              autocomplete="current-password" />
+            <button type="button" class="pw-toggle" (click)="showPw.set(!showPw())">
+              {{ showPw() ? '🙈' : '👁' }}
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+          <span class="field-error">Password is required</span>
+          }
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
+          @if (loading()) {
+          <span class="spinner spinner-white"></span> Signing in…
+          } @else {
+          Sign in
+          }
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        Don't have an account?
+        <a routerLink="/auth/register">Create one free</a>
+      </p>
+    </div>
+  </div>
+</div>

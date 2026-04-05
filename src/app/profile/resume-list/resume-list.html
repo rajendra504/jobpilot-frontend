@@ -1,0 +1,74 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">My Resumes</h1>
+      <p class="page-header__sub">Upload and manage your resumes</p>
+    </div>
+    <div class="page-header__actions">
+      <a routerLink="/profile" class="btn btn-secondary">← Back to Profile</a>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert alert-success">✅ {{ success() }}</div> }
+  @if (error()) { <div class="alert alert-error">⚠ {{ error() }}</div> }
+
+  <!-- Upload area -->
+  <div class="upload-zone" [class.uploading]="uploading()">
+    <label class="upload-label" for="resume-upload">
+      @if (uploading()) {
+      <div class="spinner spinner-lg"></div>
+      <span>Uploading & extracting text...</span>
+      } @else {
+      <span class="upload-icon">📄</span>
+      <span class="upload-main">Click to upload a resume</span>
+      <span class="upload-sub">PDF, DOCX or DOC · Max 10MB</span>
+      }
+    </label>
+    <input id="resume-upload" type="file" accept=".pdf,.doc,.docx" (change)="onFileChange($event)"
+      [disabled]="uploading()">
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading resumes...</span>
+  </div>
+  } @else if (resumes().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">📄</div>
+    <div class="empty-state__title">No resumes uploaded</div>
+    <div class="empty-state__sub">Upload your first resume above to get started.</div>
+  </div>
+  } @else {
+  <div class="resume-list">
+    @for (r of resumes(); track r.id) {
+    <div class="resume-card" [class.resume-card--primary]="r.primary">
+      <div class="resume-card__icon">
+        {{ r.contentType === 'application/pdf' ? '📕' : '📘' }}
+      </div>
+      <div class="resume-card__info">
+        <div class="resume-card__name">
+          {{ r.originalFilename }}
+          @if (r.primary) { <span class="primary-badge">⭐ Primary</span> }
+        </div>
+        <div class="resume-card__meta">
+          {{ formatSize(r.fileSize) }} ·
+          {{ r.textExtracted ? '✅ Text extracted' : '⚠ Text not extracted' }} ·
+          Uploaded {{ r.createdAt | date:'dd MMM yyyy' }}
+        </div>
+        @if (r.textPreview) {
+        <div class="resume-card__preview">{{ r.textPreview | slice:0:200 }}...</div>
+        }
+      </div>
+      <div class="resume-card__actions">
+        @if (!r.primary) {
+        <button class="btn btn-secondary btn-sm" (click)="setPrimary(r.id)">Set Primary</button>
+        }
+        <button class="btn btn-danger btn-sm" (click)="deleteResume(r.id)">Delete</button>
+      </div>
+    </div>
+    }
+  </div>
+  }
+
+</div>

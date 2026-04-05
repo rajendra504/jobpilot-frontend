@@ -1,0 +1,146 @@
+<div class="page">
+
+  <div class="back-link">
+    <button class="btn btn-secondary btn-sm" (click)="goBack()">← Back to Jobs</button>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading job...</span>
+  </div>
+  } @else if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+  } @else if (job()) {
+
+  <div class="detail-layout">
+
+    <!-- Left: Job Info -->
+    <div class="job-main">
+      <div class="card card-lg">
+        <div class="job-header">
+          <div>
+            <h1 class="job-title">{{ job()!.jobTitle }}</h1>
+            <div class="job-meta">
+              <span class="company">🏢 {{ job()!.companyName }}</span>
+              @if (job()!.location) {
+              <span class="sep">·</span>
+              <span>📍 {{ job()!.location }}</span>
+              }
+              @if (job()!.jobType) {
+              <span class="sep">·</span>
+              <span>🕐 {{ job()!.jobType }}</span>
+              }
+            </div>
+          </div>
+          <div class="job-badges">
+            <span class="badge"
+              [class]="job()!.portal.toLowerCase() === 'linkedin' ? 'badge-linkedin' : 'badge-naukri'">
+              {{ job()!.portal }}
+            </span>
+            <span class="badge" [class]="statusBadge(job()!.status)">{{ job()!.status }}</span>
+            @if (job()!.isEasyApply) {
+            <span class="badge badge-apply">Easy Apply</span>
+            }
+          </div>
+        </div>
+
+        @if (job()!.salaryRange) {
+        <div class="info-row">
+          <span class="info-label">💰 Salary</span>
+          <span>{{ job()!.salaryRange }}</span>
+        </div>
+        }
+        @if (job()!.experienceRequired) {
+        <div class="info-row">
+          <span class="info-label">📅 Experience</span>
+          <span>{{ job()!.experienceRequired }}</span>
+        </div>
+        }
+
+        <div class="info-row">
+          <span class="info-label">🔗 URL</span>
+          <a [href]="job()!.jobUrl" target="_blank" class="ext-link">Open on {{ job()!.portal }} ↗</a>
+        </div>
+
+        @if (job()!.description) {
+        <div class="desc-section">
+          <h3 class="desc-title">Job Description</h3>
+          <div class="desc-body">{{ job()!.description }}</div>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right: AI Analysis -->
+    <div class="ai-panel">
+      <div class="card">
+        <h3 class="panel-title">🤖 AI Analysis</h3>
+
+        @if (analysisError()) {
+        <div class="alert alert-error">{{ analysisError() }}</div>
+        }
+
+        @if (!analysis()) {
+        <div class="no-analysis">
+          <p>No analysis yet for this job.</p>
+          <button class="btn btn-primary" (click)="runAnalysis()" [disabled]="analysing()">
+            @if (analysing()) { <span class="spinner spinner-white"></span>&nbsp;Analysing... }
+            @else { Run AI Analysis }
+          </button>
+        </div>
+        } @else {
+        <div class="analysis-content">
+          <!-- Score -->
+          <div class="score-section">
+            <div class="score-circle"
+              [class]="analysis()!.matchScore >= 70 ? 'score-good' : analysis()!.matchScore >= 50 ? 'score-mid' : 'score-bad'">
+              {{ analysis()!.matchScore }}
+              <small>/100</small>
+            </div>
+            <div>
+              <div class="score-label">Match Score</div>
+              <span class="badge" [class]="analysis()!.decision === 'APPLY' ? 'badge-apply' : 'badge-skip'">
+                {{ analysis()!.decision }}
+              </span>
+            </div>
+          </div>
+
+          @if (analysis()!.decisionReason) {
+          <div class="analysis-row">
+            <div class="analysis-row__label">Reason</div>
+            <div class="analysis-row__val">{{ analysis()!.decisionReason }}</div>
+          </div>
+          }
+
+          @if (analysis()!.missingSkills.length) {
+          <div class="analysis-row">
+            <div class="analysis-row__label">Missing Skills</div>
+            <div class="chips">
+              @for (skill of analysis()!.missingSkills; track skill) {
+              <span class="chip chip-red">{{ skill }}</span>
+              }
+            </div>
+          </div>
+          }
+
+
+          @if (analysis()!.coverLetter) {
+          <div class="analysis-row">
+            <div class="analysis-row__label">Cover Letter</div>
+            <div class="cover-letter">{{ analysis()!.coverLetter }}</div>
+          </div>
+          }
+
+          <button class="btn btn-secondary btn-sm" (click)="runAnalysis()" [disabled]="analysing()"
+            style="margin-top:8px">
+            ↻ Re-analyse
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+
+  </div>
+  }
+
+</div>

@@ -1,0 +1,59 @@
+<div class="layout" [class.layout--collapsed]="!sidebarOpen()">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__header">
+      <div class="sidebar__brand">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#6C63FF" />
+          <path d="M8 22L14 10L20 18L24 14" stroke="white" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <circle cx="24" cy="14" r="2" fill="#FFD166" />
+        </svg>
+        @if (sidebarOpen()) {
+        <span class="sidebar__brand-name">JobPilot</span>
+        }
+      </div>
+      <button class="sidebar__toggle" (click)="sidebarOpen.set(!sidebarOpen())"
+        [title]="sidebarOpen() ? 'Collapse' : 'Expand'">
+        {{ sidebarOpen() ? '‹' : '›' }}
+      </button>
+    </div>
+
+    <nav class="sidebar__nav">
+      @for (item of navItems; track item.route) {
+      <a [routerLink]="item.route" class="nav-item" [class.nav-item--active]="isActive(item.route)"
+        [title]="!sidebarOpen() ? item.label : ''">
+        <span class="nav-item__icon">{{ item.icon }}</span>
+        @if (sidebarOpen()) {
+        <span class="nav-item__label">{{ item.label }}</span>
+        }
+      </a>
+      }
+    </nav>
+
+    <div class="sidebar__footer">
+      @if (user()) {
+      <div class="user-pill">
+        <div class="user-pill__avatar">{{ userInitials() }}</div>
+        @if (sidebarOpen()) {
+        <div class="user-pill__info">
+          <span class="user-pill__name">{{ user()!.fullName }}</span>
+          <span class="user-pill__email">{{ user()!.email }}</span>
+        </div>
+        }
+      </div>
+      }
+      <button class="logout-btn" (click)="logout()" [title]="!sidebarOpen() ? 'Logout' : ''">
+        <span>⎋</span>
+        @if (sidebarOpen()) { <span>Logout</span> }
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+
+</div>

@@ -1,0 +1,120 @@
+<div class="page">
+
+  <div class="back-link">
+    <button class="btn btn-secondary btn-sm" (click)="goBack()">← Back to Analyses</button>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading analysis...</span>
+  </div>
+  } @else if (error()) {
+  <div class="alert alert-error">{{ error() }}</div>
+  } @else if (analysis()) {
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">{{ analysis()!.jobTitle || 'Job Analysis' }}</h1>
+      <p class="page-header__sub">{{ analysis()!.companyName }}</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-secondary" (click)="reanalyse()" [disabled]="reanalysing()">
+        @if (reanalysing()) { <span class="spinner"></span>&nbsp;Running... }
+        @else { ↻ Re-analyse }
+      </button>
+      <a [routerLink]="['/jobs', analysis()!.jobListingId]" class="btn btn-primary">View Job →</a>
+    </div>
+  </div>
+
+  <div class="analysis-layout">
+
+    <!-- Score + Decision card -->
+    <div class="card score-card">
+      <div class="score-hero" [class]="'score-hero--' + scoreClass(analysis()!.matchScore)">
+        <div class="score-hero__num">{{ analysis()!.matchScore }}</div>
+        <div class="score-hero__label">/ 100 Match Score</div>
+      </div>
+      <div class="decision-row">
+        <span class="badge badge-lg" [class]="analysis()!.decision === 'APPLY' ? 'badge-apply' : 'badge-skip'">
+          {{ analysis()!.decision === 'APPLY' ? '✅ APPLY RECOMMENDED' : '⏭ SKIP RECOMMENDED' }}
+        </span>
+      </div>
+      @if (analysis()!.decisionReason) {
+      <p class="decision-reason">{{ analysis()!.decisionReason }}</p>
+      }
+      <div class="meta-row">
+        <span class="meta-item">
+          <span class="meta-label">Status</span>
+          <span class="badge"
+            [class]="analysis()!.status === 'SUCCESS' ? 'badge-applied' : analysis()!.status === 'ERROR' ? 'badge-failed' : 'badge-pending'">
+            {{ analysis()!.status }}
+          </span>
+        </span>
+        @if (analysis()!.promptTokensUsed) {
+        <span class="meta-item">
+          <span class="meta-label">Tokens used</span>
+          <span class="meta-val">{{ analysis()!.promptTokensUsed }}</span>
+        </span>
+        }
+        <span class="meta-item">
+          <span class="meta-label">Analysed</span>
+          <span class="meta-val">{{ analysis()!.createdAt | date:'dd MMM yyyy, HH:mm' }}</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Missing Skills -->
+    @if (analysis()!.missingSkills.length) {
+    <div class="card">
+      <h3 class="card-section-title">⚠ Missing Skills</h3>
+      <div class="chips">
+        @for (skill of analysis()!.missingSkills; track skill) {
+        <span class="chip chip-red">{{ skill }}</span>
+        }
+      </div>
+    </div>
+    }
+
+
+    <!-- Cover Letter -->
+    @if (analysis()!.coverLetter) {
+    <div class="card">
+      <h3 class="card-section-title">✉ Generated Cover Letter</h3>
+      <div class="text-block">{{ analysis()!.coverLetter }}</div>
+    </div>
+    }
+
+    <!-- Resume Snippet -->
+    @if (analysis()!.resumeSnippet) {
+    <div class="card">
+      <h3 class="card-section-title">📄 Resume Snippet Suggestion</h3>
+      <div class="text-block">{{ analysis()!.resumeSnippet }}</div>
+    </div>
+    }
+
+    <!-- Application Q&A -->
+    @if (analysis()!.applicationAnswers.length) {
+    <div class="card">
+      <h3 class="card-section-title">💬 Application Q&A Answers</h3>
+      <div class="qa-list">
+        @for (qa of analysis()!.applicationAnswers; track $index) {
+        <div class="qa-item">
+          <div class="qa-q">Q: {{ qa.question }}</div>
+          <div class="qa-a">A: {{ qa.answer }}</div>
+        </div>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Error message if any -->
+    @if (analysis()!.errorMessage) {
+    <div class="alert alert-error">
+      <strong>Analysis Error:</strong> {{ analysis()!.errorMessage }}
+    </div>
+    }
+
+  </div>
+  }
+
+</div>

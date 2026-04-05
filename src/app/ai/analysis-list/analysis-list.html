@@ -1,0 +1,146 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">AI Analyses</h1>
+      <p class="page-header__sub">{{ pagedAnalyses().length }} of {{ analyses().length }} results</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-primary" (click)="runBatch()" [disabled]="batchLoading()">
+        @if (batchLoading()) { <span class="spinner spinner-white"></span>&nbsp;Analysing... }
+        @else { 🤖 Analyse All New Jobs }
+      </button>
+    </div>
+  </div>
+
+  @if (batchMsg()) {
+  <div class="alert alert-success">✅ {{ batchMsg() }}</div>
+  }
+  @if (batchError()) {
+  <div class="alert alert-error">⚠ {{ batchError() }}</div>
+  }
+  @if (error()) {
+  <div class="alert alert-error">⚠ {{ error() }}</div>
+  }
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <select title="filter" [(ngModel)]="decisionFilter" (change)="applyFilter()" class="filter-select">
+      @for (d of decisionOptions; track d) {
+      <option [value]="d">{{ d || 'All Decisions' }}</option>
+      }
+    </select>
+    @if (decisionFilter()) {
+    <button class="btn btn-secondary btn-sm" (click)="decisionFilter.set(''); applyFilter()">✕ Clear</button>
+    }
+    <span style="margin-left:auto; font-size:12px; color:#aaa;">
+      {{ analyses().length }} total
+    </span>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading analyses...</span>
+  </div>
+  } @else if (analyses().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">🤖</div>
+    <div class="empty-state__title">No analyses yet</div>
+    <div class="empty-state__sub">Click "Analyse All New Jobs" to start AI matching.</div>
+  </div>
+  } @else {
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Job Title</th>
+          <th>Company</th>
+          <th>Match Score</th>
+          <th>Decision</th>
+          <th>Missing Skills</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of pagedAnalyses(); track a.id) {
+        <tr>
+          <td class="truncate" style="max-width:200px;">
+            <div class="cell-primary">{{ a.jobTitle || '—' }}</div>
+          </td>
+          <td class="truncate" style="max-width:160px;">
+            <span style="font-size:13px;color:#555;">{{ a.companyName || '—' }}</span>
+          </td>
+          <td>
+            <div class="score-bar-wrap">
+              <div class="score-bar-bg">
+                <div class="score-bar-fill" [class]="scoreClass(a.matchScore)" [style.width.%]="a.matchScore"></div>
+              </div>
+              <span class="score-num" [class]="scoreClass(a.matchScore)">{{ a.matchScore }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="badge" [class]="a.decision === 'APPLY' ? 'badge-apply' : 'badge-skip'">
+              {{ a.decision || '—' }}
+            </span>
+          </td>
+          <td>
+            @if (a.missingSkills.length) {
+            <div class="skill-chips">
+              @for (skill of (a.missingSkills | slice:0:2); track skill) {
+              <span class="skill-chip skill-chip--red">{{ skill }}</span>
+              }
+              @if (a.missingSkills.length > 2) {
+              <span class="skill-chip skill-chip--grey">+{{ a.missingSkills.length - 2 }}</span>
+              }
+            </div>
+            } @else {
+            <span class="text-muted">—</span>
+            }
+          </td>
+          <td>
+            <span class="badge"
+              [class]="a.status === 'DONE' ? 'badge-apply' : a.status === 'FAILED' ? 'badge-failed' : 'badge-pending'">
+              {{ a.status || 'PENDING' }}
+            </span>
+          </td>
+          <td>
+            <span class="text-muted text-sm">{{ a.createdAt | date:'dd MMM' }}</span>
+          </td>
+          <td>
+            <a [routerLink]="['/ai', a.jobListingId]" class="btn btn-secondary btn-sm">View</a>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="pagination">
+    <button class="pagination__btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0">←
+      Prev</button>
+
+    @for (p of pageRange(); track p) {
+    @if (p === -1) {
+    <button class="pagination__btn pagination__btn--dots" disabled>…</button>
+    } @else {
+    <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage()" (click)="goToPage(p)">
+      {{ p + 1 }}
+    </button>
+    }
+    }
+
+    <button class="pagination__btn" (click)="goToPage(currentPage() + 1)"
+      [disabled]="currentPage() >= totalPages() - 1">Next →</button>
+    <span class="pagination__info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+  </div>
+  }
+
+  }
+
+</div>

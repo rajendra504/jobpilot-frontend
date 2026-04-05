@@ -1,0 +1,174 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Job Preferences</h1>
+      <p class="page-header__sub">Set what jobs you want and how the auto-apply should behave</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-primary btn-lg" (click)="save()" [disabled]="saving()">
+        @if (saving()) { <span class="spinner spinner-white"></span>&nbsp;Saving... }
+        @else { 💾 Save Preferences }
+      </button>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert alert-success">✅ {{ success() }}</div> }
+  @if (error()) { <div class="alert alert-error">⚠ {{ error() }}</div> }
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading preferences...</span>
+  </div>
+  } @else {
+
+  <div class="pref-grid">
+
+    <!-- What you want -->
+    <div class="card">
+      <h3 class="card-title">🎯 What You Want</h3>
+
+      <div class="form-field">
+        <label>Desired Roles <span class="hint">(comma-separated)</span></label>
+        <input type="text" [ngModel]="desiredRolesInput()" (ngModelChange)="desiredRolesInput.set($event)"
+          placeholder="Software Engineer, Backend Developer, Java Developer">
+      </div>
+
+      <div class="form-field">
+        <label>Preferred Locations <span class="hint">(comma-separated)</span></label>
+        <input type="text" [ngModel]="preferredLocationsInput()" (ngModelChange)="preferredLocationsInput.set($event)"
+          placeholder="Hyderabad, Bangalore, Remote">
+      </div>
+
+      <div class="form-field">
+        <label>Preferred Industries <span class="hint">(comma-separated)</span></label>
+        <input type="text" [ngModel]="preferredIndustriesInput()" (ngModelChange)="preferredIndustriesInput.set($event)"
+          placeholder="IT, Fintech, Healthcare">
+      </div>
+
+      <div class="form-field">
+        <label>Experience Level</label>
+        <select aria-label="experience" [ngModel]="experienceLevel()" (ngModelChange)="experienceLevel.set($event)">
+          <option value="">— Select —</option>
+          @for (level of expLevelOptions; track level) {
+          <option [value]="level">{{ level }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Notice Period (days)</label>
+        <input type="number" [ngModel]="noticePeriodDays()" (ngModelChange)="noticePeriodDays.set(+$event)"
+          placeholder="30" min="0" max="365">
+      </div>
+    </div>
+
+    <!-- Salary -->
+    <div class="card">
+      <h3 class="card-title">💰 Salary Expectations</h3>
+
+      <div class="form-field">
+        <label>Currency</label>
+        <select aria-label="currency" [ngModel]="currency()" (ngModelChange)="currency.set($event)">
+          @for (c of currencyOptions; track c) {
+          <option [value]="c">{{ c }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="salary-row">
+        <div class="form-field">
+          <label>Minimum Salary</label>
+          <input type="number" [ngModel]="minSalary()" (ngModelChange)="minSalary.set($event ? +$event : null)"
+            placeholder="500000">
+        </div>
+        <div class="form-field">
+          <label>Maximum Salary</label>
+          <input type="number" [ngModel]="maxSalary()" (ngModelChange)="maxSalary.set($event ? +$event : null)"
+            placeholder="2000000">
+        </div>
+      </div>
+
+      <h3 class="card-title" style="margin-top:20px">📋 Job Types</h3>
+      <div class="type-chips">
+        @for (type of jobTypeOptions; track type) {
+        <button type="button" class="type-chip" [class.active]="jobTypes().includes(type)"
+          (click)="toggleJobType(type)">
+          {{ type.replace('_', ' ') }}
+        </button>
+        }
+      </div>
+    </div>
+
+    <!-- Work mode -->
+    <div class="card">
+      <h3 class="card-title">🏠 Work Mode</h3>
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Open to Remote</div>
+            <div class="toggle-sub">Accept fully remote positions</div>
+          </div>
+          <label class="toggle">
+            <input aria-label="sidebar" type="checkbox" [ngModel]="openToRemote()" (ngModelChange)="openToRemote.set($event)">
+            <span class="toggle__slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Open to Hybrid</div>
+            <div class="toggle-sub">Accept hybrid work arrangements</div>
+          </div>
+          <label class="toggle">
+            <input aria-label="sidebar" type="checkbox" [ngModel]="openToHybrid()" (ngModelChange)="openToHybrid.set($event)">
+            <span class="toggle__slider"></span>
+          </label>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Open to Relocation</div>
+            <div class="toggle-sub">Willing to relocate to a new city</div>
+          </div>
+          <label class="toggle">
+            <input aria-label="sidebar" type="checkbox" [ngModel]="openToRelocation()" (ngModelChange)="openToRelocation.set($event)">
+            <span class="toggle__slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auto-apply settings -->
+    <div class="card">
+      <h3 class="card-title">🤖 Auto-Apply Settings</h3>
+      <div class="toggle-list">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Enable Auto-Apply</div>
+            <div class="toggle-sub">Automatically apply to APPLY-rated jobs</div>
+          </div>
+          <label class="toggle">
+            <input aria-label="sidebar" type="checkbox" [ngModel]="autoApplyEnabled()" (ngModelChange)="autoApplyEnabled.set($event)">
+            <span class="toggle__slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="form-field" style="margin-top:16px">
+        <label>Daily Apply Limit</label>
+        <input type="number" [ngModel]="dailyApplyLimit()"
+          (ngModelChange)="dailyApplyLimit.set($event ? +$event : null)" placeholder="10" min="1" max="100">
+        <span class="field-hint">Max number of applications per day</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="save-bar">
+    <button class="btn btn-primary btn-lg" (click)="save()" [disabled]="saving()">
+      @if (saving()) { <span class="spinner spinner-white"></span>&nbsp;Saving... }
+      @else { 💾 Save Preferences }
+    </button>
+  </div>
+
+  }
+
+</div>

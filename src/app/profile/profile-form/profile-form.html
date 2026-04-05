@@ -1,0 +1,249 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">My Profile</h1>
+      <p class="page-header__sub">Keep your profile complete for better AI matching</p>
+    </div>
+    <div class="page-header__actions">
+      @if (profile()) {
+      <div class="completeness">
+        <span class="completeness__label">Profile completeness</span>
+        <div class="completeness__bar">
+          <div class="completeness__fill" [style.width.%]="profile()!.completenessScore"></div>
+        </div>
+        <span class="completeness__pct">{{ profile()!.completenessScore }}%</span>
+      </div>
+      }
+      <a routerLink="/profile/resume" class="btn btn-secondary">📄 Resumes</a>
+      <a routerLink="/profile/credentials" class="btn btn-secondary">🔑 Credentials</a>
+      <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+        @if (saving()) { <span class="spinner spinner-white"></span>&nbsp;Saving... }
+        @else { 💾 Save Profile }
+      </button>
+    </div>
+  </div>
+
+  @if (success()) { <div class="alert alert-success">✅ {{ success() }}</div> }
+  @if (error()) { <div class="alert alert-error">⚠ {{ error() }}</div> }
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading profile...</span>
+  </div>
+  } @else {
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'basic'" (click)="activeTab.set('basic')">👤 Basic
+      Info</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'education'" (click)="activeTab.set('education')">🎓
+      Education</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'experience'" (click)="activeTab.set('experience')">💼
+      Experience</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'qa'" (click)="activeTab.set('qa')">💬 Q&A Bank</button>
+  </div>
+
+  <!-- BASIC INFO -->
+  @if (activeTab() === 'basic') {
+  <div class="card">
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Phone</label>
+        <input type="text" [ngModel]="phone()" (ngModelChange)="phone.set($event)" placeholder="+91 98765 43210">
+      </div>
+      <div class="form-field">
+        <label>Location</label>
+        <input type="text" [ngModel]="location()" (ngModelChange)="location.set($event)" placeholder="Hyderabad, India">
+      </div>
+      <div class="form-field">
+        <label>LinkedIn URL</label>
+        <input type="url" [ngModel]="linkedinUrl()" (ngModelChange)="linkedinUrl.set($event)"
+          placeholder="https://linkedin.com/in/yourprofile">
+      </div>
+      <div class="form-field">
+        <label>GitHub URL</label>
+        <input type="url" [ngModel]="githubUrl()" (ngModelChange)="githubUrl.set($event)"
+          placeholder="https://github.com/yourusername">
+      </div>
+      <div class="form-field">
+        <label>Portfolio URL</label>
+        <input type="url" [ngModel]="portfolioUrl()" (ngModelChange)="portfolioUrl.set($event)"
+          placeholder="https://yourportfolio.com">
+      </div>
+    </div>
+
+    <div class="form-field" style="margin-top:4px">
+      <label>Summary</label>
+      <textarea [ngModel]="summary()" (ngModelChange)="summary.set($event)" rows="4"
+        placeholder="Brief professional summary..."></textarea>
+    </div>
+
+    <div class="form-grid" style="margin-top:4px">
+      <div class="form-field">
+        <label>Skills <span class="hint">(comma-separated)</span></label>
+        <input type="text" [ngModel]="skillsInput()" (ngModelChange)="skillsInput.set($event)"
+          placeholder="Java, Spring Boot, Angular, SQL">
+      </div>
+      <div class="form-field">
+        <label>Languages <span class="hint">(comma-separated)</span></label>
+        <input type="text" [ngModel]="languagesInput()" (ngModelChange)="languagesInput.set($event)"
+          placeholder="English, Telugu, Hindi">
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- EDUCATION -->
+  @if (activeTab() === 'education') {
+  <div class="section-actions">
+    <button class="btn btn-secondary" (click)="addEducation()">+ Add Education</button>
+  </div>
+  @if (education().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">🎓</div>
+    <div class="empty-state__title">No education added</div>
+  </div>
+  }
+  @for (edu of education(); track $index) {
+  <div class="card entry-card">
+    <div class="entry-card__header">
+      <span>{{ edu.institution || 'New Education' }}</span>
+      <button class="btn-icon-danger" (click)="removeEducation($index)">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Institution</label>
+        <input type="text" [ngModel]="edu.institution" (ngModelChange)="updateEducation($index, 'institution', $event)"
+          placeholder="IIT Hyderabad">
+      </div>
+      <div class="form-field">
+        <label>Degree</label>
+        <input type="text" [ngModel]="edu.degree" (ngModelChange)="updateEducation($index, 'degree', $event)"
+          placeholder="B.Tech">
+      </div>
+      <div class="form-field">
+        <label>Field of Study</label>
+        <input type="text" [ngModel]="edu.fieldOfStudy"
+          (ngModelChange)="updateEducation($index, 'fieldOfStudy', $event)" placeholder="Computer Science">
+      </div>
+      <div class="form-field">
+        <label>GPA</label>
+        <input type="number" [ngModel]="edu.gpa" (ngModelChange)="updateEducation($index, 'gpa', +$event)"
+          placeholder="8.5" step="0.1" min="0" max="10">
+      </div>
+      <div class="form-field">
+        <label>Start Year</label>
+        <input type="text" [ngModel]="edu.startYear" (ngModelChange)="updateEducation($index, 'startYear', $event)"
+          placeholder="2018">
+      </div>
+      <div class="form-field">
+        <label>End Year</label>
+        <input type="text" [ngModel]="edu.endYear" (ngModelChange)="updateEducation($index, 'endYear', $event)"
+          placeholder="2022">
+      </div>
+    </div>
+  </div>
+  }
+  }
+
+  <!-- EXPERIENCE -->
+  @if (activeTab() === 'experience') {
+  <div class="section-actions">
+    <button class="btn btn-secondary" (click)="addExperience()">+ Add Experience</button>
+  </div>
+  @if (experience().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">💼</div>
+    <div class="empty-state__title">No experience added</div>
+  </div>
+  }
+  @for (exp of experience(); track $index) {
+  <div class="card entry-card">
+    <div class="entry-card__header">
+      <span>{{ exp.title || 'New Experience' }} {{ exp.company ? 'at ' + exp.company : '' }}</span>
+      <button class="btn-icon-danger" (click)="removeExperience($index)">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Company</label>
+        <input type="text" [ngModel]="exp.company" (ngModelChange)="updateExperience($index, 'company', $event)"
+          placeholder="Google">
+      </div>
+      <div class="form-field">
+        <label>Title / Role</label>
+        <input type="text" [ngModel]="exp.title" (ngModelChange)="updateExperience($index, 'title', $event)"
+          placeholder="Software Engineer">
+      </div>
+      <div class="form-field">
+        <label>Location</label>
+        <input type="text" [ngModel]="exp.location" (ngModelChange)="updateExperience($index, 'location', $event)"
+          placeholder="Bengaluru">
+      </div>
+      <div class="form-field">
+        <label>Start Date</label>
+        <input type="text" [ngModel]="exp.startDate" (ngModelChange)="updateExperience($index, 'startDate', $event)"
+          placeholder="Jan 2022">
+      </div>
+      <div class="form-field">
+        <label>End Date</label>
+        <input type="text" [ngModel]="exp.endDate" (ngModelChange)="updateExperience($index, 'endDate', $event)"
+          [disabled]="exp.current" placeholder="Dec 2023">
+      </div>
+      <div class="form-field check-field">
+        <label>
+          <input type="checkbox" [ngModel]="exp.current" (ngModelChange)="updateExperience($index, 'current', $event)">
+          Currently working here
+        </label>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Description</label>
+      <textarea [ngModel]="exp.description" (ngModelChange)="updateExperience($index, 'description', $event)" rows="3"
+        placeholder="Describe your role and achievements..."></textarea>
+    </div>
+  </div>
+  }
+  }
+
+  <!-- Q&A BANK -->
+  @if (activeTab() === 'qa') {
+  <div class="section-actions">
+    <p class="hint-text">Pre-fill common application questions so AI can use them during auto-apply.</p>
+    <button class="btn btn-secondary" (click)="addQa()">+ Add Q&A</button>
+  </div>
+  @if (qaBank().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">💬</div>
+    <div class="empty-state__title">No Q&A entries yet</div>
+  </div>
+  }
+  @for (qa of qaBank(); track $index) {
+  <div class="card entry-card">
+    <div class="entry-card__header">
+      <span>Q&A #{{ $index + 1 }}</span>
+      <button class="btn-icon-danger" (click)="removeQa($index)">✕</button>
+    </div>
+    <div class="form-field">
+      <label>Question</label>
+      <input type="text" [ngModel]="qa.question" (ngModelChange)="updateQa($index, 'question', $event)"
+        placeholder="Why do you want to work here?">
+    </div>
+    <div class="form-field">
+      <label>Answer</label>
+      <textarea [ngModel]="qa.answer" (ngModelChange)="updateQa($index, 'answer', $event)" rows="3"
+        placeholder="Your pre-written answer..."></textarea>
+    </div>
+  </div>
+  }
+  }
+
+  <div class="save-bar">
+    <button class="btn btn-primary btn-lg" (click)="save()" [disabled]="saving()">
+      @if (saving()) { <span class="spinner spinner-white"></span>&nbsp;Saving... }
+      @else { 💾 Save Profile }
+    </button>
+  </div>
+  }
+
+</div>

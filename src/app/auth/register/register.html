@@ -1,0 +1,110 @@
+<div class="auth-wrap">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <svg width="36" height="36" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#6C63FF" />
+        <path d="M8 22L14 10L20 18L24 14" stroke="white" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <circle cx="24" cy="14" r="2" fill="#FFD166" />
+      </svg>
+      <span class="auth-brand__name">JobPilot</span>
+    </div>
+
+    <div class="auth-hero">
+      <h1 class="auth-hero__title">Start your<br><span>autopilot journey.</span></h1>
+      <p class="auth-hero__sub">Set up your profile once. Let JobPilot handle the rest — scraping, analysis, and
+        applications 24/7.</p>
+
+      <div class="auth-steps">
+        <div class="step">
+          <div class="step__num">1</div>
+          <div>
+            <strong>Create your account</strong>
+            <p>Free to start, takes 30 seconds</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step__num">2</div>
+          <div>
+            <strong>Build your profile</strong>
+            <p>Skills, experience, QA bank</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step__num">3</div>
+          <div>
+            <strong>Set preferences & go</strong>
+            <p>JobPilot takes over from here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2 class="auth-card__title">Create account</h2>
+      <p class="auth-card__sub">Join JobPilot and automate your job hunt</p>
+
+      @if (error()) {
+      <div class="alert alert-error">
+        <span>⚠</span> {{ error() }}
+      </div>
+      }
+      @if (success()) {
+      <div class="alert alert-success">
+        <span>✓</span> {{ success() }}
+      </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="form-field">
+          <label for="fullName">Full name</label>
+          <input id="fullName" type="text" formControlName="fullName" placeholder="Jane Doe"
+            [class.invalid]="fullName.invalid && fullName.touched" autocomplete="name" />
+          @if (fullName.invalid && fullName.touched) {
+          <span class="field-error">Full name must be at least 2 characters</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="email">Email address</label>
+          <input id="email" type="email" formControlName="email" placeholder="you@example.com"
+            [class.invalid]="email.invalid && email.touched" autocomplete="email" />
+          @if (email.invalid && email.touched) {
+          <span class="field-error">{{ email.errors?.['required'] ? 'Email is required' : 'Enter a valid email'
+            }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="password">Password</label>
+          <div class="pw-wrap">
+            <input id="password" [type]="showPw() ? 'text' : 'password'" formControlName="password"
+              placeholder="Min 8 characters" [class.invalid]="password.invalid && password.touched"
+              autocomplete="new-password" />
+            <button type="button" class="pw-toggle" (click)="showPw.set(!showPw())">
+              {{ showPw() ? '🙈' : '👁' }}
+            </button>
+          </div>
+          @if (password.invalid && password.touched) {
+          <span class="field-error">Password must be at least 8 characters</span>
+          }
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full" [disabled]="loading()">
+          @if (loading()) {
+          <span class="spinner spinner-white"></span> Creating account…
+          } @else {
+          Create account
+          }
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        Already have an account?
+        <a routerLink="/auth/login">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>

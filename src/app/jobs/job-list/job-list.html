@@ -1,0 +1,140 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Job Listings</h1>
+      <p class="page-header__sub">{{ totalElements() }} jobs found</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-secondary" (click)="triggerScrape()" [disabled]="scraping()">
+        @if (scraping()) { <span class="spinner"></span>&nbsp;Scraping... }
+        @else { 🔍 Scrape Jobs }
+      </button>
+    </div>
+  </div>
+
+  @if (scrapeMsg()) {
+  <div class="alert alert-success">✅ {{ scrapeMsg() }}</div>
+  }
+  @if (scrapeError()) {
+  <div class="alert alert-error">⚠ {{ scrapeError() }}</div>
+  }
+  @if (error()) {
+  <div class="alert alert-error">⚠ {{ error() }}</div>
+  }
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <select title="status" [(ngModel)]="statusFilter" (change)="applyFilters()" class="filter-select">
+      @for (s of statusOptions; track s) {
+      <option [value]="s">{{ s || 'All Statuses' }}</option>
+      }
+    </select>
+    <select title="portal" [(ngModel)]="portalFilter" (change)="applyFilters()" class="filter-select">
+      @for (p of portalOptions; track p) {
+      <option [value]="p">{{ p || 'All Portals' }}</option>
+      }
+    </select>
+    @if (statusFilter() || portalFilter()) {
+    <button class="btn btn-secondary btn-sm" (click)="statusFilter.set(''); portalFilter.set(''); applyFilters()">
+      ✕ Clear
+    </button>
+    }
+    <span style="margin-left:auto; font-size:12px; color:#aaa;">
+      {{ totalElements() }} total
+    </span>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading jobs...</span>
+  </div>
+  } @else if (jobs().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">💼</div>
+    <div class="empty-state__title">No jobs found</div>
+    <div class="empty-state__sub">Try scraping jobs or adjusting your filters.</div>
+  </div>
+  } @else {
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Job Title</th>
+          <th>Company</th>
+          <th>Location</th>
+          <th>Portal</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Scraped</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (job of jobs(); track job.id) {
+        <tr>
+          <td style="max-width:240px;">
+            <a [href]="job.jobUrl" target="_blank" class="job-link">{{ job.jobTitle }}</a>
+            @if (job.isEasyApply) {
+            <span class="easy-badge">
+              <span class="tick">✔</span> Easy Apply
+            </span>
+            }
+          </td>
+          <td class="truncate" style="max-width:150px;">
+            <span class="text-secondary">{{ job.companyName }}</span>
+          </td>
+          <td class="truncate" style="max-width:140px;">
+            <span class="text-muted">{{ job.location || '—' }}</span>
+          </td>
+          <td>
+            <span class="badge" [class]="portalBadge(job.portal)">{{ job.portal }}</span>
+          </td>
+          <td>
+            <span class="text-muted text-sm">{{ job.jobType || '—' }}</span>
+          </td>
+          <td>
+            <span class="badge" [class]="statusBadge(job.status)">{{ job.status }}</span>
+          </td>
+          <td>
+            <span class="text-muted text-sm">{{ job.scrapedAt | date:'dd MMM' }}</span>
+          </td>
+          <td>
+            <select class="status-select" [value]="job.status"
+              (change)="updateStatus(job.id, $any($event.target).value)">
+              <option value="NEW">NEW</option>
+              <option value="SKIPPED">SKIP</option>
+              <option value="MANUAL">MANUAL</option>
+            </select>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="pagination">
+    <button class="pagination__btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0">←
+      Prev</button>
+
+    @for (p of pageRange; track p) {
+    @if (p === -1) {
+    <button class="pagination__btn pagination__btn--dots" disabled>…</button>
+    } @else {
+    <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage()" (click)="goToPage(p)">
+      {{ p + 1 }}
+    </button>
+    }
+    }
+
+    <button class="pagination__btn" (click)="goToPage(currentPage() + 1)"
+      [disabled]="currentPage() >= totalPages() - 1">Next →</button>
+    <span class="pagination__info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+  </div>
+  }
+  }
+
+</div>

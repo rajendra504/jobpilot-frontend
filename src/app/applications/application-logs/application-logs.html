@@ -1,0 +1,171 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Application Logs</h1>
+      <p class="page-header__sub">Track every automated application attempt</p>
+    </div>
+    <div class="page-header__actions">
+      <button class="btn btn-primary" (click)="triggerRun()" [disabled]="running()">
+        @if (running()) { <span class="spinner spinner-white"></span>&nbsp;Running... }
+        @else { ▶ Run Auto-Apply }
+      </button>
+    </div>
+  </div>
+
+  @if (runResult()) {
+  <div class="alert alert-success">
+    ✅ Run complete — Applied: <strong>{{ runResult()!.applied }}</strong> &nbsp;|&nbsp;
+    Manual: <strong>{{ runResult()!.manualRequired }}</strong> &nbsp;|&nbsp;
+    Skipped: <strong>{{ runResult()!.skipped }}</strong> &nbsp;|&nbsp;
+    Failed: <strong>{{ runResult()!.failed }}</strong>
+  </div>
+  }
+  @if (runError()) {
+  <div class="alert alert-error">⚠ {{ runError() }}</div>
+  }
+  @if (error()) {
+  <div class="alert alert-error">⚠ {{ error() }}</div>
+  }
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    @for (card of statCards; track card.key) {
+    <div class="mini-stat" [style.border-color]="card.color">
+      <span class="mini-stat__icon" [style.background]="card.bg">{{ card.icon }}</span>
+      <div class="mini-stat__content">
+        <span class="mini-stat__num" [style.color]="card.color">{{ stats()[card.key] }}</span>
+        <span class="mini-stat__label">{{ card.label }}</span>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <span class="filter-label">Status:</span>
+    <select [(ngModel)]="statusFilter" (change)="applyFilter()" class="filter-select">
+      @for (s of statusOptions; track s) {
+      <option [value]="s">{{ s || 'All Statuses' }}</option>
+      }
+    </select>
+    @if (statusFilter()) {
+    <button class="btn btn-secondary btn-sm" (click)="statusFilter.set(''); applyFilter()">✕ Clear</button>
+    }
+    <span style="margin-left:auto; font-size:12px; color:#aaa;">
+      {{ logs().length }} entries
+    </span>
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div><span>Loading logs...</span>
+  </div>
+  } @else if (allLogs().length === 0) {
+  <div class="empty-state">
+    <div class="empty-state__icon">📋</div>
+    <div class="empty-state__title">No application logs yet</div>
+    <div class="empty-state__sub">Run Auto-Apply to start applying to jobs. All attempts will appear here.</div>
+  </div>
+  } @else {
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Job Title</th>
+          <th>Company</th>
+          <th>Portal</th>
+          <th>Status</th>
+          <th>AI Decision</th>
+          <th>Match Score</th>
+          <th>Applied At</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of pagedLogs(); track log.id) {
+        <tr>
+          <td class="truncate" style="max-width:220px;">
+            <div class="cell-primary">{{ log.jobTitle || '—' }}</div>
+          </td>
+          <td class="truncate" style="max-width:160px;">
+            <span class="text-secondary">{{ log.companyName || '—' }}</span>
+          </td>
+          <td>
+            <span class="badge" [class]="log.portal?.toLowerCase() === 'linkedin' ? 'badge-linkedin' : 'badge-naukri'">
+              {{ log.portal }}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [class]="statusBadge(log.status)">{{ log.status }}</span>
+          </td>
+          <td>
+            @if (log.aiDecision) {
+            <span class="badge" [class]="decisionBadge(log.aiDecision)">{{ log.aiDecision }}</span>
+            } @else {
+            <span class="text-muted">—</span>
+            }
+          </td>
+          <td>
+            @if (log.matchScore != null) {
+            <div class="score-bar-wrap">
+              <div class="score-bar-bg">
+                <div class="score-bar-fill"
+                  [class]="log.matchScore >= 70 ? 'score-good' : log.matchScore >= 50 ? 'score-mid' : 'score-bad'"
+                  [style.width.%]="log.matchScore"></div>
+              </div>
+              <span class="score-num"
+                [class]="log.matchScore >= 70 ? 'score-good' : log.matchScore >= 50 ? 'score-mid' : 'score-bad'">
+                {{ log.matchScore }}
+              </span>
+            </div>
+            } @else {
+            <span class="text-muted">—</span>
+            }
+          </td>
+          <td>
+            <span class="text-muted text-sm">
+              {{ log.appliedAt ? (log.appliedAt | date:'dd MMM, HH:mm') : '—' }}
+            </span>
+          </td>
+          <td>
+            @if (log.status === 'MANUAL' && log.manualApplyUrl) {
+            <a [href]="log.manualApplyUrl" target="_blank" class="btn btn-ghost btn-sm">Apply →</a>
+            } @else if (log.failureReason) {
+            <span class="reason-tip" [title]="log.failureReason">⚠ reason</span>
+            } @else {
+            <span class="text-muted">—</span>
+            }
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages() > 1) {
+  <div class="pagination">
+    <button class="pagination__btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0">←
+      Prev</button>
+
+    @for (p of pageRange(); track p) {
+    @if (p === -1) {
+    <button class="pagination__btn pagination__btn--dots" disabled>…</button>
+    } @else {
+    <button class="pagination__btn" [class.pagination__btn--active]="p === currentPage()" (click)="goToPage(p)">
+      {{ p + 1 }}
+    </button>
+    }
+    }
+
+    <button class="pagination__btn" (click)="goToPage(currentPage() + 1)"
+      [disabled]="currentPage() >= totalPages() - 1">Next →</button>
+    <span class="pagination__info">Page {{ currentPage() + 1 }} of {{ totalPages() }}</span>
+  </div>
+  }
+
+  }
+
+</div>
