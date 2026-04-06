@@ -1,0 +1,141 @@
+<div class="page">
+
+  <div class="page-header">
+    <div>
+      <h1 class="page-header__title">Portal Sessions</h1>
+      <p class="page-header__sub">Cookie sessions allow the scraper to access portals without re-logging in every run
+      </p>
+    </div>
+    <div class="page-header__actions">
+      <a routerLink="/profile/credentials" class="btn btn-secondary">🔑 Credentials</a>
+      <a routerLink="/profile" class="btn btn-secondary">← Profile</a>
+    </div>
+  </div>
+
+  @if (success()) {
+  <div class="alert alert-success">✅ {{ success() }}</div>
+  }
+  @if (error()) {
+  <div class="alert alert-error">⚠ {{ error() }}</div>
+  }
+
+  <div class="alert alert-info">
+    <strong>How it works:</strong> Click <em>Open Login</em> to open the portal login page on the server.
+    Log in manually (including OTP/2FA if prompted). Then click <em>Confirm &amp; Save Session</em> —
+    the server saves your browser cookies so future scrapes run without re-logging in.
+    Sessions last <strong>25 days</strong>.
+  </div>
+
+  @if (loading()) {
+  <div class="loading-state">
+    <div class="spinner spinner-lg"></div>
+    <span>Checking session status...</span>
+  </div>
+  } @else {
+
+  <div class="session-grid">
+    @for (portal of portals; track portal.key) {
+    <div class="session-card" [class.session-card--active]="isActive(portal.key)">
+
+      <!-- Header -->
+      <div class="session-card__header">
+        <div class="portal-logo" [class]="portal.logoClass">{{ portal.logoText }}</div>
+        <div class="session-card__info">
+          <div class="session-card__name">{{ portal.label }}</div>
+          <div class="session-card__desc">{{ portal.description }}</div>
+        </div>
+        <div class="session-status">
+          @if (isActive(portal.key)) {
+          <span class="status-badge status-badge--active">
+            <span class="status-dot status-dot--green"></span> Active
+          </span>
+          } @else {
+          <span class="status-badge status-badge--inactive">
+            <span class="status-dot status-dot--grey"></span> No session
+          </span>
+          }
+        </div>
+      </div>
+
+      <!-- Pending instruction box (shown after init, before confirm) -->
+      @if (hasPendingInstruction(portal.key)) {
+      <div class="instruction-box">
+        <div class="instruction-box__icon">🌐</div>
+        <div class="instruction-box__text">
+          <strong>Browser opened on server</strong>
+          <p>{{ getInstruction(portal.key) }}</p>
+        </div>
+      </div>
+      }
+
+      <!-- Actions -->
+      <div class="session-card__actions">
+
+        @if (!hasPendingInstruction(portal.key)) {
+        <!-- Step 1: Open login -->
+        <button class="btn btn-primary" (click)="initSession(portal.key)"
+          [disabled]="initiating() === portal.key || confirming() !== null || clearing() !== null">
+          @if (initiating() === portal.key) {
+          <span class="spinner spinner-white"></span>&nbsp;Opening...
+          } @else {
+          🌐 {{ isActive(portal.key) ? 'Refresh Session' : 'Open Login' }}
+          }
+        </button>
+        } @else {
+        <!-- Step 2: Confirm after manual login -->
+        <button class="btn btn-success" (click)="confirmSession(portal.key)" [disabled]="confirming() === portal.key">
+          @if (confirming() === portal.key) {
+          <span class="spinner spinner-white"></span>&nbsp;Saving...
+          } @else {
+          ✅ Confirm &amp; Save Session
+          }
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="initSession(portal.key)"
+          [disabled]="initiating() === portal.key">
+          ↺ Re-open Login
+        </button>
+        }
+
+        <!-- Clear button (always visible if session exists) -->
+        @if (isActive(portal.key)) {
+        <button class="btn btn-danger btn-sm" (click)="clearSession(portal.key)" [disabled]="clearing() === portal.key">
+          @if (clearing() === portal.key) {
+          <span class="spinner"></span>
+          } @else {
+          🗑 Clear Session
+          }
+        </button>
+        }
+
+      </div>
+
+    </div>
+    }
+  </div>
+
+  <!-- How-to steps -->
+  <div class="howto-card">
+    <h3 class="howto-card__title">Step-by-step guide</h3>
+    <ol class="howto-steps">
+      <li>
+        <strong>Open Login</strong> — This opens the portal's login page in the server's headless browser.
+      </li>
+      <li>
+        <strong>Complete Login on Server</strong> — Because the browser is on the server (not your screen),
+        you need to wait ~30 seconds for it to load, then the server's Chromium will be sitting at the login page.
+        If you are running locally with <code>headless=false</code>, a Chromium window will appear on your screen.
+      </li>
+      <li>
+        <strong>Confirm &amp; Save Session</strong> — Click this button after the server has logged in.
+        The cookies are encrypted and stored in the database.
+      </li>
+      <li>
+        <strong>Scrape Jobs</strong> — Go to <a routerLink="/jobs">Job Listings</a> and click Scrape Jobs.
+        The scraper will use the saved session automatically.
+      </li>
+    </ol>
+  </div>
+
+  }
+
+</div>

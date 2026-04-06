@@ -12,5 +12,9 @@ export const PROFILE_ROUTES: Routes = [
   {
     path: 'credentials',
     loadComponent: () => import('./portal-credentials/portal-credentials').then(m => m.PortalCredentials)
+  },
+  {
+    path: 'sessions',
+    loadComponent: () => import('./session-manager/session-manager').then(m => m.SessionManager)
   }
 ];

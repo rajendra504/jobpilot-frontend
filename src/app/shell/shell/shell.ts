@@ -31,6 +31,7 @@ export class Shell {
     { label: 'AI Analysis', icon: '🤖', route: '/ai' },
     { label: 'Applications', icon: '📋', route: '/applications' },
     { label: 'Profile', icon: '👤', route: '/profile' },
+    { label: 'Sessions', icon: '🍪', route: '/profile/sessions' },
     { label: 'Preferences', icon: '⚙️', route: '/preferences' },
   ];
 
