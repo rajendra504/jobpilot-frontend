@@ -18,14 +18,19 @@
     </div>
   </div>
 
-  <!-- Live scrape banner -->
+  <!-- Live scrape banner — shows phase + jobs saved + elapsed time -->
   @if (scraping()) {
   <div class="scrape-banner">
     <div class="scrape-banner__left">
       <span class="scrape-pulse"></span>
-      <span class="scrape-banner__text">
-        Scraping in progress — <strong>{{ totalElements() }} jobs</strong> found so far
-      </span>
+      <div class="scrape-banner__info">
+        <span class="scrape-banner__phase">{{ phaseLabel(scrapePhase()) }}</span>
+        <span class="scrape-banner__text">
+          <strong>{{ pollCount() }}</strong> new jobs saved so far
+          &nbsp;·&nbsp;
+          <strong>{{ totalElements() }}</strong> total in your list
+        </span>
+      </div>
     </div>
     <span class="scrape-banner__time">{{ formatElapsed(pollElapsed()) }}</span>
   </div>

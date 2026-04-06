@@ -2,9 +2,9 @@ import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { JobService, JobListingResponse } from '../../core/services/job-service';
+import { JobService, JobListingResponse, ScrapeStatus } from '../../core/services/job-service';
 import { interval, Subscription } from 'rxjs';
-import { switchMap, takeWhile } from 'rxjs/operators';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-job-list',
@@ -21,10 +21,12 @@ export class JobList implements OnInit, OnDestroy {
   scrapeError = signal('');
   error = signal('');
 
-  // Polling state — tracks jobs found so far during a live scrape
-  pollCount = signal(0);          // how many jobs found so far
-  pollElapsed = signal(0);        // seconds since scrape started
-  private pollSub?: Subscription;
+  scrapePhase = signal('');
+  pollCount = signal(0);
+  pollElapsed = signal(0);
+
+  private statusPollSub?: Subscription;
+  private jobsPollSub?: Subscription;
   private timerSub?: Subscription;
 
   statusFilter = signal('');
@@ -41,8 +43,6 @@ export class JobList implements OnInit, OnDestroy {
   ngOnInit(): void { this.loadJobs(); }
 
   ngOnDestroy(): void {
-    // Clean up subscriptions when user navigates away.
-    // Scrape continues on the server — only the live-refresh polling stops.
     this.stopPolling();
   }
 
@@ -73,40 +73,50 @@ export class JobList implements OnInit, OnDestroy {
     this.loadJobs();
   }
 
-  /**
-   * Triggers a scrape on the backend, then polls every 5 s
-   * so new jobs appear in the table as they are saved — without
-   * the user having to wait for the entire scrape to finish.
-   *
-   * The backend scrape continues even if the user navigates away;
-   * only the live-refresh polling stops (ngOnDestroy).
-   */
   triggerScrape(): void {
     if (this.scraping()) return;
 
     this.scraping.set(true);
     this.scrapeError.set('');
-    this.pollCount.set(this.totalElements());
+    this.scrapePhase.set('STARTING');
+    this.pollCount.set(0);
     this.pollElapsed.set(0);
 
-    // Fire the scrape — we no longer wait for its response to refresh the table
     this.jobService.scrape().subscribe({
-      next: () => {
-        // Scrape finished — do one final reload and stop polling
-        this.scraping.set(false);
-        this.stopPolling();
-        this.loadJobs();
-      },
+      next: () => {  },
       error: err => {
         this.scraping.set(false);
         this.stopPolling();
-        this.scrapeError.set(err.error?.message || 'Scrape encountered an error. Check logs.');
-        this.loadJobs(); // still refresh — some jobs may have been saved before the error
+        this.scrapeError.set(err.error?.message || 'Failed to start scrape. Check server logs.');
+        this.loadJobs();
       }
     });
 
-    // Poll every 5 s while scraping — refresh page 0 (newest jobs first)
-    this.pollSub = interval(5000).pipe(
+    this.statusPollSub = interval(4000).pipe(
+      switchMap(() => this.jobService.getScrapeStatus())
+    ).subscribe({
+      next: res => {
+        const status: ScrapeStatus = res.data;
+        this.scrapePhase.set(status?.phase ?? '');
+        this.pollCount.set(status?.jobsSavedSoFar ?? 0);
+
+        if (status && !status.running) {
+
+          this.scraping.set(false);
+          this.stopPolling();
+          this.loadJobs();
+
+          if (status.error) {
+            this.scrapeError.set(status.error);
+          }
+        }
+      },
+      error: () => {
+
+      }
+    });
+
+    this.jobsPollSub = interval(5000).pipe(
       switchMap(() => this.jobService.getListings({
         status: this.statusFilter() || undefined,
         portal: this.portalFilter() || undefined,
@@ -120,27 +130,26 @@ export class JobList implements OnInit, OnDestroy {
           this.totalPages.set(res.data?.totalPages ?? 0);
         }
         this.totalElements.set(res.data?.totalElements ?? 0);
-        this.pollCount.set(res.data?.totalElements ?? 0);
       }
     });
 
-    // Elapsed-seconds counter for the UI
     this.timerSub = interval(1000).subscribe(() => {
       this.pollElapsed.update(n => n + 1);
     });
   }
 
   stopScrape(): void {
-    // Stops the live-refresh UI; backend scrape still runs to completion
     this.scraping.set(false);
     this.stopPolling();
     this.loadJobs();
   }
 
   private stopPolling(): void {
-    this.pollSub?.unsubscribe();
+    this.statusPollSub?.unsubscribe();
+    this.jobsPollSub?.unsubscribe();
     this.timerSub?.unsubscribe();
-    this.pollSub = undefined;
+    this.statusPollSub = undefined;
+    this.jobsPollSub = undefined;
     this.timerSub = undefined;
   }
 
@@ -180,6 +189,16 @@ export class JobList implements OnInit, OnDestroy {
   formatElapsed(secs: number): string {
     if (secs < 60) return `${secs}s`;
     return `${Math.floor(secs / 60)}m ${secs % 60}s`;
+  }
+
+  phaseLabel(phase: string): string {
+    switch (phase) {
+      case 'STARTING': return 'Starting up...';
+      case 'SCRAPING_LINKEDIN': return 'Scraping LinkedIn...';
+      case 'SCRAPING_NAUKRI': return 'Scraping Naukri...';
+      case 'IDLE': return 'Done';
+      default: return phase || 'Running...';
+    }
   }
 
   portalBadge(portal: string): string {

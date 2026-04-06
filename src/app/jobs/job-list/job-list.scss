@@ -76,8 +76,22 @@
     gap: 10px;
   }
 
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__phase {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1d4ed8;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
   &__text {
-    font-size: 14px;
+    font-size: 13px;
     color: #1e40af;
   }
 

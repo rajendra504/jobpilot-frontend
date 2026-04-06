@@ -27,12 +27,23 @@ export interface ScrapeResultSummary {
   skipReason: string;
 }
 
+export interface ScrapeStatus {
+  running: boolean;
+  jobsSavedSoFar: number;
+  phase: string;
+  error: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class JobService {
   constructor(private api: ApiService) { }
 
-  scrape(): Observable<ApiResponse<ScrapeResultSummary>> {
-    return this.api.post<ScrapeResultSummary>('/jobs/scrape');
+  scrape(): Observable<ApiResponse<any>> {
+    return this.api.post<any>('/jobs/scrape');
+  }
+
+  getScrapeStatus(): Observable<ApiResponse<ScrapeStatus>> {
+    return this.api.get<ScrapeStatus>('/jobs/scrape/status');
   }
 
   getListings(params: {
