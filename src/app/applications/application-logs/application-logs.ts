@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -13,8 +13,7 @@ import { RunnerService, ApplicationLogResponse, RunResult } from '../../core/ser
 export class ApplicationLogs implements OnInit {
   private runner = inject(RunnerService);
 
-  allLogs = signal<ApplicationLogResponse[]>([]);
-  logs = signal<ApplicationLogResponse[]>([]); // filtered
+  logs = signal<ApplicationLogResponse[]>([]);
   stats = signal<Record<string, number>>({});
   loading = signal(true);
   running = signal(false);
@@ -32,33 +31,11 @@ export class ApplicationLogs implements OnInit {
     { key: 'SKIPPED', label: 'Skipped', icon: '⏭', color: '#6b7280', bg: '#f4f4f8' },
   ] as const;
 
-  // ── Pagination ──────────────────────────────────────────────
+  // Server-side pagination
   currentPage = signal(0);
+  totalPages = signal(0);
+  totalElements = signal(0);
   readonly pageSize = 20;
-
-  totalPages = computed(() => Math.ceil(this.logs().length / this.pageSize));
-
-  pagedLogs = computed(() => {
-    const start = this.currentPage() * this.pageSize;
-    return this.logs().slice(start, start + this.pageSize);
-  });
-
-  pageRange = computed(() => {
-    const total = this.totalPages();
-    const cur = this.currentPage();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
-
-    const pages: number[] = [0];
-    if (cur > 2) pages.push(-1);
-
-    const start = Math.max(1, cur - 1);
-    const end = Math.min(total - 2, cur + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    if (cur < total - 3) pages.push(-1);
-    pages.push(total - 1);
-    return pages;
-  });
 
   ngOnInit(): void {
     this.loadLogs();
@@ -68,11 +45,15 @@ export class ApplicationLogs implements OnInit {
   loadLogs(): void {
     this.loading.set(true);
     this.error.set('');
-    this.runner.getLogs(this.statusFilter() || undefined).subscribe({
+    this.runner.getLogs({
+      status: this.statusFilter() || undefined,
+      page: this.currentPage(),
+      size: this.pageSize,
+    }).subscribe({
       next: res => {
-        this.allLogs.set(res.data ?? []);
-        this.logs.set(res.data ?? []);
-        this.currentPage.set(0);
+        this.logs.set(res.data?.content ?? []);
+        this.totalPages.set(res.data?.totalPages ?? 0);
+        this.totalElements.set(res.data?.totalElements ?? 0);
         this.loading.set(false);
       },
       error: err => {
@@ -90,16 +71,29 @@ export class ApplicationLogs implements OnInit {
   }
 
   applyFilter(): void {
-    const filter = this.statusFilter();
-    const all = this.allLogs();
-    this.logs.set(filter ? all.filter(l => l.status === filter) : all);
     this.currentPage.set(0);
+    this.loadLogs();
   }
 
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages()) return;
     this.currentPage.set(page);
+    this.loadLogs();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  get pageRange(): number[] {
+    const total = this.totalPages();
+    const cur = this.currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+    const pages: number[] = [0];
+    if (cur > 2) pages.push(-1);
+    const start = Math.max(1, cur - 1);
+    const end = Math.min(total - 2, cur + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (cur < total - 3) pages.push(-1);
+    pages.push(total - 1);
+    return pages;
   }
 
   triggerRun(): void {
@@ -110,6 +104,7 @@ export class ApplicationLogs implements OnInit {
       next: res => {
         this.runResult.set(res.data);
         this.running.set(false);
+        this.currentPage.set(0);
         this.loadLogs();
         this.loadStats();
       },

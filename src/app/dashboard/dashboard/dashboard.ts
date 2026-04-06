@@ -66,7 +66,7 @@ export class Dashboard implements OnInit {
       .subscribe({
         next: res => {
           console.log('ANALYSIS API:', res);
-          this.recentAnalyses.set((res.data ?? []).slice(0, 6));
+          this.recentAnalyses.set((res.data?.content ?? []).slice(0, 6));
         },
         error: err => {
           console.error('ANALYSIS ERROR:', err);

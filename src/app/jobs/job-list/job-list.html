@@ -6,16 +6,31 @@
       <p class="page-header__sub">{{ totalElements() }} jobs found</p>
     </div>
     <div class="page-header__actions">
-      <button class="btn btn-secondary" (click)="triggerScrape()" [disabled]="scraping()">
-        @if (scraping()) { <span class="spinner"></span>&nbsp;Scraping... }
-        @else { 🔍 Scrape Jobs }
+      @if (!scraping()) {
+      <button class="btn btn-secondary" (click)="triggerScrape()">
+        🔍 Scrape Jobs
       </button>
+      } @else {
+      <button class="btn btn-danger btn-sm" (click)="stopScrape()">
+        ⏹ Stop Watching
+      </button>
+      }
     </div>
   </div>
 
-  @if (scrapeMsg()) {
-  <div class="alert alert-success">✅ {{ scrapeMsg() }}</div>
+  <!-- Live scrape banner -->
+  @if (scraping()) {
+  <div class="scrape-banner">
+    <div class="scrape-banner__left">
+      <span class="scrape-pulse"></span>
+      <span class="scrape-banner__text">
+        Scraping in progress — <strong>{{ totalElements() }} jobs</strong> found so far
+      </span>
+    </div>
+    <span class="scrape-banner__time">{{ formatElapsed(pollElapsed()) }}</span>
+  </div>
   }
+
   @if (scrapeError()) {
   <div class="alert alert-error">⚠ {{ scrapeError() }}</div>
   }
@@ -101,7 +116,7 @@
             <span class="text-muted text-sm">{{ job.scrapedAt | date:'dd MMM' }}</span>
           </td>
           <td>
-            <select class="status-select" [value]="job.status"
+            <select aria-label="status" class="status-select" [value]="job.status"
               (change)="updateStatus(job.id, $any($event.target).value)">
               <option value="NEW">NEW</option>
               <option value="SKIPPED">SKIP</option>

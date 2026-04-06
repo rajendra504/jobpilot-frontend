@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiService, ApiResponse } from './api-service';
+import { ApiService, ApiResponse, Page } from './api-service';
 
 export interface RunResult {
   applied: number;
@@ -32,10 +32,16 @@ export class RunnerService {
     return this.api.post<RunResult>('/runner/run');
   }
 
-  getLogs(status?: string): Observable<ApiResponse<ApplicationLogResponse[]>> {
-    const params: Record<string, string> = {};
-    if (status) params['status'] = status;
-    return this.api.get<ApplicationLogResponse[]>('/runner/logs', params);
+  getLogs(params: {
+    status?: string;
+    page?: number;
+    size?: number;
+  } = {}): Observable<ApiResponse<Page<ApplicationLogResponse>>> {
+    const p: Record<string, string | number> = {};
+    if (params.status) p['status'] = params.status;
+    p['page'] = params.page ?? 0;
+    p['size'] = params.size ?? 20;
+    return this.api.get<Page<ApplicationLogResponse>>('/runner/logs', p);
   }
 
   getStats(): Observable<ApiResponse<Record<string, number>>> {

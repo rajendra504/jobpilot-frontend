@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiService, ApiResponse } from './api-service';
+import { ApiService, ApiResponse, Page } from './api-service';
 
 export interface ApplicationAnswer {
   question: string;
@@ -42,9 +42,15 @@ export class AiService {
     return this.api.get<AiAnalysisResponse>(`/ai/analyses/${jobId}`);
   }
 
-  getAllAnalyses(decision?: string): Observable<ApiResponse<AiAnalysisResponse[]>> {
-    const params: Record<string, string> = {};
-    if (decision) params['decision'] = decision;
-    return this.api.get<AiAnalysisResponse[]>('/ai/analyses', params);
+  getAllAnalyses(params: {
+    decision?: string;
+    page?: number;
+    size?: number;
+  } = {}): Observable<ApiResponse<Page<AiAnalysisResponse>>> {
+    const p: Record<string, string | number> = {};
+    if (params.decision) p['decision'] = params.decision;
+    p['page'] = params.page ?? 0;
+    p['size'] = params.size ?? 15;
+    return this.api.get<Page<AiAnalysisResponse>>('/ai/analyses', p);
   }
 }

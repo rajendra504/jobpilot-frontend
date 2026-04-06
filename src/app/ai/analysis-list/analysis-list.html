@@ -3,7 +3,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-header__title">AI Analyses</h1>
-      <p class="page-header__sub">{{ pagedAnalyses().length }} of {{ analyses().length }} results</p>
+      <p class="page-header__sub">{{ totalElements() }} results</p>
     </div>
     <div class="page-header__actions">
       <button class="btn btn-primary" (click)="runBatch()" [disabled]="batchLoading()">
@@ -35,7 +35,7 @@
     <button class="btn btn-secondary btn-sm" (click)="decisionFilter.set(''); applyFilter()">✕ Clear</button>
     }
     <span style="margin-left:auto; font-size:12px; color:#aaa;">
-      {{ analyses().length }} total
+      {{ totalElements() }} total
     </span>
   </div>
 
@@ -66,7 +66,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (a of pagedAnalyses(); track a.id) {
+        @for (a of analyses(); track a.id) {
         <tr>
           <td class="truncate" style="max-width:200px;">
             <div class="cell-primary">{{ a.jobTitle || '—' }}</div>
@@ -125,7 +125,7 @@
     <button class="pagination__btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0">←
       Prev</button>
 
-    @for (p of pageRange(); track p) {
+    @for (p of pageRange; track p) {
     @if (p === -1) {
     <button class="pagination__btn pagination__btn--dots" disabled>…</button>
     } @else {

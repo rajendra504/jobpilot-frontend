@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,8 +13,7 @@ import { AiService, AiAnalysisResponse } from '../../core/services/ai-service';
 export class AnalysisList implements OnInit {
   private aiService = inject(AiService);
 
-  allAnalyses = signal<AiAnalysisResponse[]>([]);
-  analyses = signal<AiAnalysisResponse[]>([]); // filtered
+  analyses = signal<AiAnalysisResponse[]>([]);
   loading = signal(true);
   batchLoading = signal(false);
   error = signal('');
@@ -24,44 +23,26 @@ export class AnalysisList implements OnInit {
   decisionFilter = signal('');
   readonly decisionOptions = ['', 'APPLY', 'SKIP'];
 
-  // ── Pagination ──────────────────────────────────────────────
+  // Server-side pagination
   currentPage = signal(0);
+  totalPages = signal(0);
+  totalElements = signal(0);
   readonly pageSize = 15;
-
-  totalPages = computed(() => Math.ceil(this.analyses().length / this.pageSize));
-
-  pagedAnalyses = computed(() => {
-    const start = this.currentPage() * this.pageSize;
-    return this.analyses().slice(start, start + this.pageSize);
-  });
-
-  pageRange = computed(() => {
-    const total = this.totalPages();
-    const cur = this.currentPage();
-    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
-
-    const pages: number[] = [0];
-    if (cur > 2) pages.push(-1); // ellipsis
-
-    const start = Math.max(1, cur - 1);
-    const end = Math.min(total - 2, cur + 1);
-    for (let i = start; i <= end; i++) pages.push(i);
-
-    if (cur < total - 3) pages.push(-1); // ellipsis
-    pages.push(total - 1);
-    return pages;
-  });
 
   ngOnInit(): void { this.loadAnalyses(); }
 
   loadAnalyses(): void {
     this.loading.set(true);
     this.error.set('');
-    this.aiService.getAllAnalyses(this.decisionFilter() || undefined).subscribe({
+    this.aiService.getAllAnalyses({
+      decision: this.decisionFilter() || undefined,
+      page: this.currentPage(),
+      size: this.pageSize,
+    }).subscribe({
       next: res => {
-        this.allAnalyses.set(res.data ?? []);
-        this.analyses.set(res.data ?? []);
-        this.currentPage.set(0);
+        this.analyses.set(res.data?.content ?? []);
+        this.totalPages.set(res.data?.totalPages ?? 0);
+        this.totalElements.set(res.data?.totalElements ?? 0);
         this.loading.set(false);
       },
       error: err => {
@@ -72,16 +53,29 @@ export class AnalysisList implements OnInit {
   }
 
   applyFilter(): void {
-    const filter = this.decisionFilter();
-    const all = this.allAnalyses();
-    this.analyses.set(filter ? all.filter(a => a.decision === filter) : all);
     this.currentPage.set(0);
+    this.loadAnalyses();
   }
 
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages()) return;
     this.currentPage.set(page);
+    this.loadAnalyses();
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  get pageRange(): number[] {
+    const total = this.totalPages();
+    const cur = this.currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+    const pages: number[] = [0];
+    if (cur > 2) pages.push(-1);
+    const start = Math.max(1, cur - 1);
+    const end = Math.min(total - 2, cur + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+    if (cur < total - 3) pages.push(-1);
+    pages.push(total - 1);
+    return pages;
   }
 
   runBatch(): void {
@@ -92,6 +86,7 @@ export class AnalysisList implements OnInit {
       next: res => {
         this.batchMsg.set(res.message);
         this.batchLoading.set(false);
+        this.currentPage.set(0);
         this.loadAnalyses();
       },
       error: err => {

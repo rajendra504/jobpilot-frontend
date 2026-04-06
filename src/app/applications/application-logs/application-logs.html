@@ -3,7 +3,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-header__title">Application Logs</h1>
-      <p class="page-header__sub">Track every automated application attempt</p>
+      <p class="page-header__sub">{{ totalElements() }} total attempts</p>
     </div>
     <div class="page-header__actions">
       <button class="btn btn-primary" (click)="triggerRun()" [disabled]="running()">
@@ -44,7 +44,7 @@
   <!-- Filter bar -->
   <div class="filter-bar">
     <span class="filter-label">Status:</span>
-    <select [(ngModel)]="statusFilter" (change)="applyFilter()" class="filter-select">
+    <select aria-label="options" [(ngModel)]="statusFilter" (change)="applyFilter()" class="filter-select">
       @for (s of statusOptions; track s) {
       <option [value]="s">{{ s || 'All Statuses' }}</option>
       }
@@ -53,7 +53,7 @@
     <button class="btn btn-secondary btn-sm" (click)="statusFilter.set(''); applyFilter()">✕ Clear</button>
     }
     <span style="margin-left:auto; font-size:12px; color:#aaa;">
-      {{ logs().length }} entries
+      {{ totalElements() }} entries
     </span>
   </div>
 
@@ -61,11 +61,11 @@
   <div class="loading-state">
     <div class="spinner spinner-lg"></div><span>Loading logs...</span>
   </div>
-  } @else if (allLogs().length === 0) {
+  } @else if (totalElements() === 0) {
   <div class="empty-state">
     <div class="empty-state__icon">📋</div>
     <div class="empty-state__title">No application logs yet</div>
-    <div class="empty-state__sub">Run Auto-Apply to start applying to jobs. All attempts will appear here.</div>
+    <div class="empty-state__sub">Run Auto-Apply to start. All attempts will appear here.</div>
   </div>
   } @else {
 
@@ -84,7 +84,7 @@
         </tr>
       </thead>
       <tbody>
-        @for (log of pagedLogs(); track log.id) {
+        @for (log of logs(); track log.id) {
         <tr>
           <td class="truncate" style="max-width:220px;">
             <div class="cell-primary">{{ log.jobTitle || '—' }}</div>
@@ -150,7 +150,7 @@
     <button class="pagination__btn" (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 0">←
       Prev</button>
 
-    @for (p of pageRange(); track p) {
+    @for (p of pageRange; track p) {
     @if (p === -1) {
     <button class="pagination__btn pagination__btn--dots" disabled>…</button>
     } @else {

@@ -3,8 +3,7 @@
   <div class="page-header">
     <div>
       <h1 class="page-header__title">Portal Sessions</h1>
-      <p class="page-header__sub">Cookie sessions allow the scraper to access portals without re-logging in every run
-      </p>
+      <p class="page-header__sub">Save your login session so the scraper can access job portals automatically</p>
     </div>
     <div class="page-header__actions">
       <a routerLink="/profile/credentials" class="btn btn-secondary">🔑 Credentials</a>
@@ -19,11 +18,23 @@
   <div class="alert alert-error">⚠ {{ error() }}</div>
   }
 
-  <div class="alert alert-info">
-    <strong>How it works:</strong> Click <em>Open Login</em> to open the portal login page on the server.
-    Log in manually (including OTP/2FA if prompted). Then click <em>Confirm &amp; Save Session</em> —
-    the server saves your browser cookies so future scrapes run without re-logging in.
-    Sessions last <strong>25 days</strong>.
+  <div class="howto-info">
+    <div class="howto-info__title">How it works</div>
+    <div class="howto-info__steps">
+      <div class="howto-step">
+        <span class="howto-step__num">1</span>
+        <span>Click <strong>Open Login</strong> — the server opens the portal's login page in the background.</span>
+      </div>
+      <div class="howto-step">
+        <span class="howto-step__num">2</span>
+        <span>Wait a few seconds for the page to load, then click <strong>Confirm &amp; Save Session</strong> — your
+          login cookies are encrypted and stored.</span>
+      </div>
+      <div class="howto-step">
+        <span class="howto-step__num">3</span>
+        <span>Sessions last <strong>25 days</strong>. After that, repeat the process to refresh.</span>
+      </div>
+    </div>
   </div>
 
   @if (loading()) {
@@ -37,7 +48,6 @@
     @for (portal of portals; track portal.key) {
     <div class="session-card" [class.session-card--active]="isActive(portal.key)">
 
-      <!-- Header -->
       <div class="session-card__header">
         <div class="portal-logo" [class]="portal.logoClass">{{ portal.logoText }}</div>
         <div class="session-card__info">
@@ -57,7 +67,6 @@
         </div>
       </div>
 
-      <!-- Pending instruction box (shown after init, before confirm) -->
       @if (hasPendingInstruction(portal.key)) {
       <div class="instruction-box">
         <span class="instruction-box__icon">🌐</span>
@@ -68,11 +77,8 @@
       </div>
       }
 
-      <!-- Actions -->
       <div class="session-card__actions">
-
         @if (!hasPendingInstruction(portal.key)) {
-        <!-- Step 1: Open login -->
         <button class="btn btn-primary" (click)="initSession(portal.key)"
           [disabled]="initiating() === portal.key || confirming() !== null || clearing() !== null">
           @if (initiating() === portal.key) {
@@ -82,7 +88,6 @@
           }
         </button>
         } @else {
-        <!-- Step 2: Confirm after manual login -->
         <button class="btn btn-success" (click)="confirmSession(portal.key)" [disabled]="confirming() === portal.key">
           @if (confirming() === portal.key) {
           <span class="spinner spinner-white"></span>&nbsp;Saving...
@@ -96,47 +101,19 @@
         </button>
         }
 
-        <!-- Clear button (always visible if session exists) -->
         @if (isActive(portal.key)) {
         <button class="btn btn-danger btn-sm" (click)="clearSession(portal.key)" [disabled]="clearing() === portal.key">
           @if (clearing() === portal.key) {
           <span class="spinner"></span>
           } @else {
-          🗑 Clear Session
+          🗑 Clear
           }
         </button>
         }
-
       </div>
 
     </div>
     }
-  </div>
-
-  <!-- How-to steps -->
-  <div class="howto-card">
-    <h3 class="howto-card__title">Step-by-step guide</h3>
-    <ol class="howto-steps">
-      <li>
-        <strong>Open Login</strong> — Sends a request to the server, which opens the portal's login page in its
-        headless Chromium browser.
-      </li>
-      <li>
-        <strong>Log in via the server browser</strong> — Because the browser runs on the server (not your screen),
-        you cannot see it directly. The server will navigate to the login URL automatically. Wait a few seconds, then
-        click <strong>Confirm &amp; Save Session</strong> once the server has had time to load the page.
-        <em>Note: on hosted deployments (Render), the login page opens in headless mode — you will not see a
-          window.</em>
-      </li>
-      <li>
-        <strong>Confirm &amp; Save Session</strong> — The cookies from the server browser are encrypted and stored in
-        the database.
-      </li>
-      <li>
-        <strong>Scrape Jobs</strong> — Go to <a routerLink="/jobs">Job Listings</a> and click Scrape Jobs. The scraper
-        will use the saved session automatically.
-      </li>
-    </ol>
   </div>
 
   }
