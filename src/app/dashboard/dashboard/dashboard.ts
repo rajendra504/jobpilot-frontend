@@ -14,15 +14,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class Dashboard implements OnInit {
 
-  // 🔥 Inject services
   private runner = inject(RunnerService);
   private ai = inject(AiService);
   private auth = inject(AuthService);
 
-  // 🔥 IMPORTANT: Fix for NG0203
   private destroyRef = inject(DestroyRef);
 
-  // 🔥 Signals
   stats = signal<Record<string, number>>({});
   recentAnalyses = signal<any[]>([]);
   loading = signal(true);
@@ -46,29 +43,26 @@ export class Dashboard implements OnInit {
     this.loadRecentAnalyses();
   }
 
-  // 🔥 FIXED METHOD
   loadStats(): void {
     this.runner.getStats()
-      .pipe(takeUntilDestroyed(this.destroyRef)) // ✅ FIX HERE
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          console.log('STATS API:', res);
+          //console.log('STATS API:', res);
 
-          // 🔥 SAFE handling
           this.stats.set(res.data ?? {});
           this.loading.set(false);
         },
         error: err => {
-          console.error('STATS ERROR:', err);
+          //console.error('STATS ERROR:', err);
           this.loading.set(false);
         }
       });
   }
 
-  // 🔥 FIXED METHOD
   loadRecentAnalyses(): void {
     this.ai.getAllAnalyses()
-      .pipe(takeUntilDestroyed(this.destroyRef)) // ✅ FIX HERE
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
           console.log('ANALYSIS API:', res);
@@ -88,19 +82,18 @@ export class Dashboard implements OnInit {
     this.runError.set('');
 
     this.runner.run()
-      .pipe(takeUntilDestroyed(this.destroyRef)) // ✅ GOOD PRACTICE
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: res => {
-          console.log('RUN RESULT:', res);
+          //console.log('RUN RESULT:', res);
 
           this.runResult.set(res.data);
           this.runnerLoading.set(false);
 
-          // Reload stats after run
           this.loadStats();
         },
         error: err => {
-          console.error('RUN ERROR:', err);
+         // console.error('RUN ERROR:', err);
 
           this.runError.set(err.error?.message || 'Run failed.');
           this.runnerLoading.set(false);
